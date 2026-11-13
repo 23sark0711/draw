@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6EDEF; --paper:#FFFFFF; --ink:#22303C; --muted:#5D6D79; --line:#C7D3D8;
+  --mark:#FFD43B; --on-mark:#22303C; --red:#D7263D; --ok:#2E8B57;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141B21; --paper:#1E272F; --ink:#E7EDF1; --muted:#9AA9B4; --line:#34424D;
+    --mark:#F0C02E; --on-mark:#1A2229; --red:#FF5C70; --ok:#5CC48A;
+    color-scheme: dark;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Huninn","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+main{max-width:520px;margin:0 auto;padding:28px 18px 64px}
+#admin{max-width:1000px}
+h1{font-size:1.75rem;line-height:1.25;margin:0 0 4px}
+h2{font-size:1.15rem;margin:0 0 12px}
+.status{color:var(--muted);margin:0}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+label{display:block;font-size:.95rem;margin-bottom:6px}
+input,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;max-width:100%;min-width:0}
+/* iPhone 的日期、時間欄位預設有固定寬度，會撐破版面，這裡改回跟其他欄位一樣 */
+input[type="date"],input[type="time"]{-webkit-appearance:none;appearance:none;display:block;min-height:46px;text-align:left}
+input::-webkit-date-and-time-value{text-align:left}
+.row2>*,.row-id>*{min-width:0}
+input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.phone{font-size:1.5rem;letter-spacing:.35em;text-align:center;padding-left:.35em}
+fieldset{border:0;padding:0;margin:18px 0 0;min-width:0}
+legend{font-size:.95rem;margin-bottom:8px;padding:0}
+.seg,.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip,.seg button{font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer}
+.chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--mark);border-color:var(--mark);color:var(--on-mark)}
+.portion{border-top:1px dashed var(--line);padding-top:16px}
+.count{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:12px}
+.stepper{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.stepper button{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:1.2rem;cursor:pointer}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:2.2em;text-align:center;font-size:1.25rem}
+.primary{display:block;width:100%;margin-top:22px;font:inherit;font-size:1.15rem;padding:14px;border:0;border-radius:12px;background:var(--ink);color:var(--paper);cursor:pointer}
+.primary:disabled{opacity:.6}
+.ghost{font:inherit;background:none;border:1.5px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 14px;cursor:pointer}
+.notice{background:var(--paper);border-left:4px solid var(--mark);border-radius:8px;padding:12px 14px;margin-top:16px;white-space:pre-line}
+.notice p{margin:0}
+.notice .n-first{font-size:1.1rem;padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed var(--line)}
+.lockbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:14px;font-size:.9rem}
+.lockbar[hidden]{display:none}
+input:disabled{opacity:.55}
+.row-id{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
+.surname{font-size:1.3rem;text-align:center}
+.err{color:var(--red);min-height:1.6em;margin:10px 0 0}
+.err.ok{color:var(--ok)}
+
+/* 號碼牌 */
+.ticket{position:relative;background:var(--paper);border-radius:6px;padding:22px 22px 18px;margin:26px auto 0;max-width:340px;transform:rotate(-1.2deg);box-shadow:0 2px 0 var(--line),0 14px 30px -18px rgba(0,0,0,.45);text-align:center}
+.ticket::before,.ticket::after{content:"";position:absolute;top:60%;width:22px;height:22px;border-radius:50%;background:var(--bg)}
+.ticket::before{left:-11px}
+.ticket::after{right:-11px}
+.t-head{display:flex;justify-content:space-between;color:var(--muted);font-size:.95rem}
+.t-no{font-size:6.5rem;line-height:1;color:var(--red);margin-top:14px;font-variant-numeric:tabular-nums}
+.t-no small{font-size:1.6rem;margin-left:4px}
+.t-time{font-size:2.6rem;line-height:1.1;margin-top:8px;font-variant-numeric:tabular-nums}
+.t-note{margin:4px 0 0;color:var(--muted)}
+.perf{border-top:2px dashed var(--line);margin:20px -22px 14px}
+.t-items{list-style:none;padding:0;margin:0}
+.t-phone{color:var(--muted);font-size:.9rem;margin:8px 0 0}
+.hint{text-align:center;color:var(--muted);margin:22px 0 10px}
+.center{text-align:center}
+
+details{margin-top:30px}
+summary{cursor:pointer;color:var(--muted)}
+.lookup-row{display:flex;gap:8px;margin-top:10px}
+.lookup-row input{max-width:120px;text-align:center}
+.result p{margin:6px 0}
+
+/* 管理後台 */
+.a-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.a-grid{display:grid;gap:18px;grid-template-columns:1fr;align-items:start}
+@media (min-width:820px){.a-grid{grid-template-columns:360px 1fr}}
+.field{margin-top:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;align-items:center;gap:10px;margin-top:14px}
+.check input{width:20px;height:20px;flex-shrink:0}
+.help{color:var(--muted);font-size:.85rem;margin:4px 0 0}
+.slots{list-style:none;padding:0;margin:8px 0 0}
+.slot{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.s-time{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.slot.free .s-body{color:var(--muted)}
+.s-line{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.badge{font-size:.8rem;border-radius:999px;padding:1px 10px;border:1px solid var(--line)}
+.badge.done{color:var(--ok);border-color:var(--ok)}
+.badge.miss{color:var(--red);border-color:var(--red)}
+.actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.actions button{font:inherit;font-size:.85rem;padding:4px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.share{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.share a{word-break:break-all;color:var(--ink)}
+#a-qr{background:#fff;padding:8px;border-radius:8px;line-height:0}
+#a-qr:empty{display:none}
+.item-row{display:grid;grid-template-columns:minmax(0,1fr) 112px 44px;gap:8px;margin-top:8px;align-items:center}
+.i-price{position:relative}
+.i-price span{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
+.i-price input{padding-left:44px}
+.i-del{height:46px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;font:inherit;cursor:pointer}
+.money{margin-top:4px;font-size:.92rem;color:var(--muted)}
+.money strong{color:var(--ink);margin-left:6px}
+.count-hint{margin-top:6px}
+@media (max-width:480px){
+  main{padding:20px 14px 48px}
+  .panel{padding:16px}
+  h1{font-size:1.5rem}
+  .slot{grid-template-columns:52px 1fr;gap:10px}
+  .t-no{font-size:5.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 客人頁面 ================= -->
+<main id="guest" hidden>
+  <h1 id="g-title">似顏繪線上抽號</h1>
+  <p class="status" id="g-status">讀取中…</p>
+  <div class="notice" id="g-notice" hidden></div>
+
+  <form id="g-form" class="panel" hidden novalidate>
+    <div class="row-id">
+      <div>
+        <label for="g-surname">姓氏</label>
+        <input id="g-surname" class="surname" maxlength="10" autocomplete="family-name" placeholder="陳">
+      </div>
+      <div>
+        <label for="g-phone">手機號碼後三碼</label>
+        <input id="g-phone" class="phone" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="000">
+      </div>
+    </div>
+
+    <fieldset id="g-portions-box">
+      <legend>要畫幾份</legend>
+      <div class="seg" id="g-portions"></div>
+    </fieldset>
+
+    <div id="g-items"></div>
+
+    <button class="primary" id="g-submit" type="submit">抽號碼牌</button>
+    <p class="err" id="g-err" role="alert"></p>
+  </form>
+
+  <section id="g-ticket" hidden aria-live="polite">
+    <div class="ticket">
+      <div class="t-head"><span id="t-title"></span><span id="t-date"></span></div>
+      <div class="t-no"><span id="t-no"></span><small>號</small></div>
+      <div class="t-time" id="t-time"></div>
+      <p class="t-note" id="t-note"></p>
+      <div class="perf"></div>
+      <ul class="t-items" id="t-items"></ul>
+      <p class="t-phone" id="t-phone"></p>
+    </div>
+    <p class="hint">請截圖保存這張號碼牌，時間到了本人直接來攤位<br>到場時會核對姓氏和手機後三碼</p>
+  </section>
+
+  <details>
+    <summary>抽過號碼了？用姓氏和手機後三碼查詢</summary>
+    <div class="lookup-row">
+      <input id="g-lk-name" maxlength="10" placeholder="姓氏" aria-label="姓氏" style="max-width:100px;letter-spacing:0">
+      <input id="g-lk" inputmode="numeric" maxlength="3" placeholder="000" aria-label="手機號碼後三碼">
+      <button class="ghost" id="g-lk-btn" type="button">查詢</button>
+    </div>
+    <div class="result" id="g-lk-out"></div>
+  </details>
+</main>
+
+<!-- ================= 管理後台 ================= -->
+<main id="admin" hidden>
+  <section id="a-login" class="panel" style="max-width:380px;margin:40px auto">
+    <h1>管理後台</h1>
+    <form id="a-login-form">
+      <div class="field">
+        <label for="a-pw">密碼</label>
+        <input id="a-pw" type="password" autocomplete="current-password">
+      </div>
+      <button class="primary" type="submit">登入</button>
+      <p class="err" id="a-login-err" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="a-panel" hidden>
+    <div class="a-head">
+      <h1 id="a-heading">管理後台</h1>
+      <button class="ghost" id="a-refresh" type="button">重新整理</button>
+    </div>
+
+    <div class="a-grid">
+      <form id="a-form" class="panel" novalidate>
+        <h2>當天設定</h2>
+        <div class="lockbar" id="a-lockbar" hidden>
+          <span id="a-locktext"></span>
+          <button class="ghost" id="a-unlock" type="button">解鎖修改</button>
+        </div>
+        <div class="field"><label for="a-title">攤位名稱</label><input id="a-title"></div>
+        <div class="field"><label for="a-date">日期</label><input id="a-date" type="date"></div>
+        <div class="field row2">
+          <div><label for="a-start">開始</label><input id="a-start" type="time"></div>
+          <div><label for="a-end">結束</label><input id="a-end" type="time"></div>
+        </div>
+        <div class="field">
+          <label for="a-interval">每組幾分鐘</label>
+          <input id="a-interval" type="number" min="5" max="240" step="5">
+          <p class="help" id="a-preview"></p>
+        </div>
+        <div class="field">
+          <label for="a-window">隨機範圍：從最前面幾個空時段中抽</label>
+          <input id="a-window" type="number" min="1" max="50" inputmode="numeric">
+          <p class="help" id="a-window-help"></p>
+        </div>
+        <div class="field">
+          <label for="a-notice">注意事項</label>
+          <textarea id="a-notice" rows="5"></textarea>
+          <p class="help">會顯示在客人抽號頁面的最上方，清空後儲存會恢復成預設文字</p>
+        </div>
+        <div class="field">
+          <label>開放品項與售價（含 1 位）</label>
+          <div id="a-items"></div>
+          <button class="ghost" id="a-additem" type="button" style="margin-top:8px">＋ 新增品項</button>
+          <p class="help">售價只有後台看得到，客人頁面不會顯示</p>
+        </div>
+        <div class="field">
+          <label for="a-extra">每多加一位人或寵物加價（NT$）</label>
+          <input id="a-extra" type="number" min="0" step="10" inputmode="numeric">
+          <p class="help">這個金額會顯示在客人頁面</p>
+        </div>
+        <div class="field row2">
+          <div><label for="a-maxPortions">每人最多幾份</label><input id="a-maxPortions" type="number" min="1" max="5"></div>
+          <div><label for="a-maxCount">每份最多幾位</label><input id="a-maxCount" type="number" min="1" max="20"></div>
+        </div>
+        <label class="check"><input id="a-open" type="checkbox">開放抽號</label>
+        <button class="primary" type="submit">儲存設定</button>
+        <p class="err" id="a-msg" role="status"></p>
+      </form>
+
+      <div>
+        <section class="panel">
+          <h2>時段狀況</h2>
+          <p class="status" id="a-summary"></p>
+          <ol class="slots" id="a-slots"></ol>
+          <p class="help" id="a-orphan"></p>
+          <p class="help" id="a-cancelled"></p>
+        </section>
+        <section class="panel">
+          <h2>客人抽號連結</h2>
+          <div class="share"><div id="a-qr"></div><a id="a-url" target="_blank"></a></div>
+          <p class="help">每次儲存新的日期時會自動換新連結，舊的網址和 QR code 會立刻失效。記得每場市集重新印 QR code。</p>
+          <button class="ghost" id="a-newlink" type="button" style="margin-top:10px">立刻換新連結</button>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+/* ⬇⬇⬇ 把下面這行換成你的 Apps Script「網頁應用程式」網址（結尾是 /exec） ⬇⬇⬇ */
+const API_URL = 'https://script.google.com/macros/s/請貼上你的部署ID/exec';
+/* ⬆⬆⬆ 只要改這一行 ⬆⬆⬆ */
+
+const params = new URLSearchParams(location.search);
+const PAGE = params.get('page') === 'admin' ? 'admin' : 'guest';
+const KEY = params.get('k') || '';
+const WEEK = '日一二三四五六';
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+async function call(fn, ...args) {
+  // 用 text/plain 送出，避免瀏覽器額外的跨網域檢查；不帶任何 Google 登入資訊
+  let res;
+  try {
+    res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn, args })
+    });
+  } catch (e) {
+    throw new Error('網路連線不穩，請稍後再試');
+  }
+  const j = await res.json();
+  if (!j.ok) throw new Error(String(j.error).replace(/^(Exception|Error):\s*/, ''));
+  return j.data;
+}
+function fmtDate(d) {
+  if (!d) return '';
+  const [y, m, dd] = d.split('-').map(Number);
+  return `${m}/${dd}（${WEEK[new Date(y, m - 1, dd).getDay()]}）`;
+}
+function itemsText(items) { return items.map(x => `${x.name} × ${x.count}`).join('、'); }
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('portrait-ticket') || 'null'); } catch (e) { return null; } },
+  set(v) { try { localStorage.setItem('portrait-ticket', JSON.stringify(v)); } catch (e) {} },
+  clear() { try { localStorage.removeItem('portrait-ticket'); } catch (e) {} }
+};
+
+/* ================= 客人頁面 ================= */
+let S, portions = 1, picks = [];
+
+async function initGuest() {
+  $('#guest').hidden = false;
+  try { S = await call('getPublicState', KEY); }
+  catch (e) { $('#g-status').textContent = '讀取失敗，請重新整理頁面（' + e.message + '）'; return; }
+  if (S.invalid) {
+    $('#g-title').textContent = S.title + ' 線上抽號';
+    $('#g-status').textContent = S.message;
+    document.querySelector('#guest details').hidden = true;
+    return;
+  }
+
+  $('#g-title').textContent = S.title + ' 線上抽號';
+  document.title = S.title + ' 線上抽號';
+  renderNotice();
+  picks = Array.from({ length: S.maxPortions }, () => ({ name: S.items.length === 1 ? S.items[0] : null, count: 1 }));
+  renderPortions();
+  renderItems();
+  updateStatus();
+
+  // 手機上存的號碼牌，要先跟試算表確認還有效（沒被刪除或取消）才顯示
+  const saved = store.get();
+  if (saved && saved.date === S.date && await stillValid(saved)) {
+    showTicket(saved, false);
+  } else {
+    store.clear();
+    showForm();
+  }
+}
+
+async function stillValid(t) {
+  if (!t.surname) return false;   // 舊版測試留下的號碼牌沒有姓氏，直接視為失效
+  try {
+    const list = await call('lookup', t.surname || '', t.phone, KEY);
+    return list.some(x => x.no === t.no && x.time === t.time);
+  } catch (e) {
+    return true;   // 網路不穩時先照樣顯示，避免客人看不到自己的號碼牌
+  }
+}
+
+function renderNotice() {
+  const box = $('#g-notice');
+  box.innerHTML = '';
+  if (S.open && S.date) {
+    box.append(el('p', 'n-first',
+      `你現在抽的是 ${fmtDate(S.date)} ${S.start}–${S.end} 的號碼牌。如果這段時間沒辦法到場，請先不要抽，把機會留給其他客人，謝謝！`));
+  }
+  if (S.notice) box.append(el('p', '', S.notice));
+  box.hidden = !box.childNodes.length;
+}
+
+function updateStatus() {
+  let msg;
+  if (!S.open) msg = '目前沒有開放抽號';
+  else if (S.remaining <= 0) msg = `${fmtDate(S.date)} 的時段已經全部額滿，謝謝你`;
+  else msg = `還有 ${S.remaining} 個時段可以抽`;
+  $('#g-status').textContent = msg;
+}
+
+function showForm() {
+  $('#g-ticket').hidden = true;
+  $('#g-form').hidden = !(S.open && S.remaining > 0);
+}
+
+function renderPortions() {
+  const box = $('#g-portions');
+  box.innerHTML = '';
+  $('#g-portions-box').hidden = S.maxPortions < 2;
+  for (let n = 1; n <= S.maxPortions; n++) {
+    const b = el('button', '', n + ' 份');
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(n === portions));
+    b.onclick = () => { portions = n; renderPortions(); renderItems(); };
+    box.append(b);
+  }
+}
+
+function renderItems() {
+  const box = $('#g-items');
+  box.innerHTML = '';
+  for (let i = 0; i < portions; i++) {
+    const p = picks[i];
+    const fs = el('fieldset', 'portion');
+    fs.append(el('legend', '', portions > 1 ? `第 ${i + 1} 份要畫` : '想畫的品項'));
+
+    const chips = el('div', 'chips');
+    S.items.forEach(name => {
+      const b = el('button', 'chip', name);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(p.name === name));
+      b.onclick = () => { p.name = name; renderItems(); };
+      chips.append(b);
+    });
+    fs.append(chips);
+
+    const row = el('div', 'count');
+    row.append(el('span', '', '這份要畫幾位（人或動物）'));
+    const st = el('div', 'stepper');
+    const minus = el('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', '減少');
+    const out = el('output', '', p.count);
+    const plus = el('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', '增加');
+    minus.disabled = p.count <= 1;
+    plus.disabled = p.count >= S.maxCount;
+    minus.onclick = () => { p.count = Math.max(1, p.count - 1); renderItems(); };
+    plus.onclick = () => { p.count = Math.min(S.maxCount, p.count + 1); renderItems(); };
+    st.append(minus, out, plus);
+    row.append(st);
+    fs.append(row);
+    if (S.extraPrice > 0) fs.append(el('p', 'help count-hint', `每多加一位人或寵物 +NT$${S.extraPrice}`));
+    box.append(fs);
+  }
+}
+
+$('#g-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const errEl = $('#g-err');
+  errEl.textContent = '';
+  const surname = $('#g-surname').value.trim();
+  if (!surname || /[\d\s]/.test(surname)) { errEl.textContent = '請填寫姓氏'; return; }
+  const phone = $('#g-phone').value.trim();
+  if (!/^\d{3}$/.test(phone)) { errEl.textContent = '請填寫手機號碼最後 3 碼（3 個數字）'; return; }
+  const items = picks.slice(0, portions).map(p => ({ name: p.name, count: p.count }));
+  if (items.some(p => !p.name)) { errEl.textContent = portions > 1 ? '每一份都要選一個品項' : '請選一個品項'; return; }
+
+  const btn = $('#g-submit');
+  btn.disabled = true;
+  btn.textContent = '抽號中…';
+  try {
+    const t = await call('draw', { surname, phone, items, key: KEY });
+    store.set(t);
+    S.remaining = Math.max(0, S.remaining - 1);
+    updateStatus();
+    showTicket(t, true);
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '抽號碼牌';
+  }
+});
+
+function showTicket(t, animate) {
+  $('#g-form').hidden = true;
+  $('#g-ticket').hidden = false;
+  $('#t-title').textContent = t.title || S.title;
+  $('#t-date').textContent = fmtDate(t.date);
+  $('#t-time').textContent = t.time;
+  $('#t-note').textContent = `請在 ${t.time} 準時到攤位`;
+  const ul = $('#t-items');
+  ul.innerHTML = '';
+  t.items.forEach(x => ul.append(el('li', '', `${x.name} × ${x.count} 位`)));
+  $('#t-phone').textContent = `${t.surname || ''}　手機後三碼 ${t.phone}`;
+
+  const noEl = $('#t-no');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!animate || reduce) { noEl.textContent = t.no; return; }
+  const end = Date.now() + 900;
+  (function tick() {
+    if (Date.now() < end) { noEl.textContent = 1 + Math.floor(Math.random() * 40); setTimeout(tick, 60); }
+    else noEl.textContent = t.no;
+  })();
+  $('#g-ticket').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('#g-lk-btn').onclick = async () => {
+  const name = $('#g-lk-name').value.trim();
+  const v = $('#g-lk').value.trim();
+  const out = $('#g-lk-out');
+  if (!name || !/^\d{3}$/.test(v)) { out.textContent = '請填寫姓氏和手機後三碼'; return; }
+  out.textContent = '查詢中…';
+  try {
+    const list = await call('lookup', name, v, KEY);
+    out.textContent = '';
+    if (!list.length) { out.textContent = '查不到這組姓氏和後三碼的號碼'; return; }
+    list.forEach(t => out.append(el('p', '',
+      `${t.no} 號　${t.time}　${itemsText(t.items)}${t.status !== '候位中' ? '（' + t.status + '）' : ''}`)));
+  } catch (e) { out.textContent = e.message; }
+};
+
+/* ================= 管理後台 ================= */
+let PW = '', D = null, unlocked = false;
+const TIME_FIELDS = ['#a-date', '#a-start', '#a-end', '#a-interval'];
+
+function applyLock() {
+  const locked = D && D.activeCount > 0 && !unlocked;
+  TIME_FIELDS.forEach(f => { $(f).disabled = locked; });
+  $('#a-lockbar').hidden = !(D && D.activeCount > 0);
+  $('#a-locktext').textContent = locked
+    ? `已經有 ${D.activeCount} 位客人抽號，日期和時段已鎖定`
+    : `已解鎖：修改日期或時段後，已抽號客人的時間不會跟著改`;
+  $('#a-unlock').hidden = !locked;
+}
+
+function initAdmin() {
+  $('#admin').hidden = false;
+  $('#a-login-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const pw = $('#a-pw').value;
+    $('#a-login-err').textContent = '';
+    try {
+      const d = await call('adminLoad', pw);
+      PW = pw;
+      $('#a-login').hidden = true;
+      $('#a-panel').hidden = false;
+      fillForm(d.settings);
+      renderAdmin(d);
+      setInterval(refresh, 30000);
+    } catch (e) { $('#a-login-err').textContent = e.message; }
+  });
+  $('#a-refresh').onclick = refresh;
+  $('#a-additem').onclick = () => addItemRow().focus();
+  $('#a-window').addEventListener('input', windowHelp);
+  $('#a-unlock').onclick = () => {
+    if (!confirm(`已經有 ${D.activeCount} 位客人抽號。\n\n改日期會換新連結，改時段可能讓已抽的號碼對不上新的時段。\n\n確定要解鎖修改嗎？`)) return;
+    unlocked = true;
+    applyLock();
+  };
+  $('#a-newlink').onclick = async () => {
+    if (!confirm('換新連結後，舊的網址和 QR code 會立刻失效，確定要換嗎？')) return;
+    try { renderAdmin(await call('adminNewLink', PW)); } catch (e) { alert(e.message); }
+  };
+  $('#a-form').addEventListener('submit', save);
+  ['#a-start', '#a-end', '#a-interval'].forEach(s => $(s).addEventListener('input', preview));
+}
+
+async function refresh() {
+  if (document.hidden) return;
+  try { renderAdmin(await call('adminLoad', PW)); } catch (e) { msg(e.message, false); }
+}
+
+function fillForm(s) {
+  $('#a-title').value = s.title;
+  $('#a-date').value = s.date;
+  $('#a-start').value = s.start;
+  $('#a-end').value = s.end;
+  $('#a-interval').value = s.interval;
+  $('#a-items').innerHTML = '';
+  s.items.forEach(addItemRow);
+  $('#a-extra').value = s.extraPrice;
+  $('#a-window').value = s.randomWindow;
+  windowHelp();
+  $('#a-notice').value = s.notice || '';
+  $('#a-maxPortions').value = s.maxPortions;
+  $('#a-maxCount').value = s.maxCount;
+  $('#a-open').checked = !!s.open;
+  preview();
+}
+
+function preview() {
+  const tm = v => { const [h, m] = (v || '').split(':').map(Number); return h * 60 + m; };
+  const a = tm($('#a-start').value), b = tm($('#a-end').value), st = Number($('#a-interval').value);
+  $('#a-preview').textContent = (b > a && st > 0) ? `這樣共可排 ${Math.floor((b - a) / st)} 組` : '';
+}
+
+function msg(t, ok) {
+  const m = $('#a-msg');
+  m.textContent = t;
+  m.classList.toggle('ok', !!ok);
+}
+
+function checkTimes() {
+  const date = $('#a-date').value, start = $('#a-start').value.slice(0, 5), end = $('#a-end').value.slice(0, 5);
+  if (!date) return '請設定日期';
+  if (date < D.today) return '日期不能早於今天';
+  if (!start || !end) return '請設定開始和結束時間';
+  if (end <= start) return '結束時間要晚於開始時間';
+  if (date === D.today && end <= D.now) return '結束時間已經過了，請設定比現在晚的時間';
+  return '';
+}
+
+function windowHelp() {
+  const n = Math.max(1, Math.round(Number($('#a-window').value) || 1));
+  $('#a-window-help').textContent = n === 1
+    ? '設為 1：完全依照登記順序發號'
+    : `每位客人會從目前最前面的 ${n} 個空時段裡隨機抽一個。數字越小越接近依序，越大越隨機，建議 3–5`;
+}
+
+function nt(n) { return 'NT$' + Number(n || 0).toLocaleString('en-US'); }
+
+function addItemRow(it) {
+  it = it || { name: '', price: '' };
+  const row = el('div', 'item-row');
+  const name = el('input', 'i-name');
+  name.placeholder = '品項名稱';
+  name.value = it.name;
+  name.setAttribute('aria-label', '品項名稱');
+  const wrap = el('div', 'i-price');
+  wrap.append(el('span', '', 'NT$'));
+  const price = el('input');
+  price.type = 'number'; price.min = 0; price.step = 10; price.inputMode = 'numeric';
+  price.value = it.price;
+  price.setAttribute('aria-label', '售價');
+  wrap.append(price);
+  const del = el('button', 'i-del', '✕');
+  del.type = 'button';
+  del.setAttribute('aria-label', '刪除這個品項');
+  del.onclick = () => row.remove();
+  row.append(name, wrap, del);
+  $('#a-items').append(row);
+  return name;
+}
+
+function readItemRows() {
+  return [...document.querySelectorAll('#a-items .item-row')]
+    .map(r => ({ name: r.querySelector('.i-name').value.trim(), price: r.querySelector('.i-price input').value }))
+    .filter(x => x.name);
+}
+
+async function adjust(no, kind, value) {
+  try { renderAdmin(await call('adminAdjust', PW, no, kind, value)); } catch (e) { alert(e.message); }
+}
+
+async function save(ev) {
+  ev.preventDefault();
+  if (!readItemRows().length) { msg('請至少設定一個品項', false); return; }
+  const s0 = D.settings;
+  const timeChanged = $('#a-date').value !== s0.date || $('#a-start').value.slice(0, 5) !== s0.start ||
+    $('#a-end').value.slice(0, 5) !== s0.end || Number($('#a-interval').value) !== Number(s0.interval);
+  if (timeChanged) {
+    const problem = checkTimes();
+    if (problem) { msg(problem, false); return; }
+    if (D.activeCount > 0 && !confirm(`確定要修改日期或時段嗎？已經有 ${D.activeCount} 位客人抽號。`)) return;
+  }
+  msg('儲存中…', true);
+  const input = {
+    title: $('#a-title').value,
+    date: $('#a-date').value,
+    start: $('#a-start').value.slice(0, 5),
+    end: $('#a-end').value.slice(0, 5),
+    interval: $('#a-interval').value,
+    items: readItemRows(),
+    extraPrice: $('#a-extra').value,
+    randomWindow: $('#a-window').value,
+    notice: $('#a-notice').value,
+    maxPortions: $('#a-maxPortions').value,
+    maxCount: $('#a-maxCount').value,
+    open: $('#a-open').checked,
+    force: unlocked
+  };
+  try {
+    const d = await call('adminSave', PW, input);
+    unlocked = false;
+    renderAdmin(d);
+    fillForm(d.settings);
+    msg('已儲存', true);
+  } catch (e) { msg(e.message, false); }
+}
+
+async function setStatus(no, status) {
+  if (status === '已取消' && !confirm(`確定取消 ${no} 號？這個時段會空出來給下一位客人。`)) return;
+  try { renderAdmin(await call('adminSetStatus', PW, no, status)); } catch (e) { alert(e.message); }
+}
+
+function renderAdmin(d) {
+  D = d;
+  const s = d.settings;
+  $('#a-date').min = d.today;
+  applyLock();
+  $('#a-heading').textContent = s.title + ' 管理後台';
+  const byNo = {};
+  d.tickets.filter(t => t.status !== '已取消').forEach(t => { byNo[t.no] = t; });
+  const free = d.taken.filter(x => x === null).length;
+  const active = d.tickets.filter(t => t.status !== '已取消');
+  $('#a-summary').textContent = s.date
+    ? `${fmtDate(s.date)}　${s.start}–${s.end}　已排 ${active.length} 組，空 ${free} 個時段${s.open ? '' : '（目前暫停抽號）'}`
+    : '還沒設定日期';
+  const revenue = d.tickets.filter(t => t.status !== '已取消' && t.status !== '未到').reduce((a, t) => a + t.total, 0);
+  $('#a-summary').textContent += `　預估營收 ${nt(revenue)}（不含未到）　（${d.updated} 更新）`;
+
+  const ol = $('#a-slots');
+  ol.innerHTML = '';
+  d.slots.forEach((time, i) => {
+    const li = el('li', 'slot');
+    li.append(el('span', 's-time', time));
+    const body = el('div', 's-body');
+    const no = d.taken[i];
+    if (no === null) {
+      li.classList.add('free');
+      body.textContent = '空';
+    } else {
+      const t = byNo[no];
+      if (t.time !== time) {
+        body.textContent = `${no} 號接續`;
+      } else {
+        const line = el('div', 's-line');
+        line.append(el('strong', '', `${no} 號`), el('span', '', `${t.surname || ''}　手機 ${t.phone}`));
+        line.append(el('span', 'badge' + (t.status === '已完成' ? ' done' : t.status === '未到' ? ' miss' : ''), t.status));
+        body.append(line, el('div', '', itemsText(t.items)));
+
+        const parts = [`預約 ${nt(t.amount)}`];
+        if (t.addPeople) parts.push(`現場加 ${t.addPeople} 位 +${nt(t.addPeople * s.extraPrice)}`);
+        if (t.adjust) parts.push(`其他 ${t.adjust > 0 ? '+' : '−'}${nt(Math.abs(t.adjust))}`);
+        const money = el('div', 'money', parts.join('　'));
+        money.append(el('strong', '', `合計 ${nt(t.total)}`));
+        body.append(money);
+        const acts = el('div', 'actions');
+        const add = (label, st) => {
+          const b = el('button', '', label);
+          b.type = 'button';
+          b.onclick = () => setStatus(no, st);
+          acts.append(b);
+        };
+        if (t.status === '候位中') { add('完成', '已完成'); add('未到', '未到'); add('取消', '已取消'); }
+        else add('改回候位中', '候位中');
+        body.append(acts);
+
+        const moneyActs = el('div', 'actions');
+        const mb = (label, fn) => { const b = el('button', '', label); b.type = 'button'; b.onclick = fn; moneyActs.append(b); };
+        mb(`＋1 位（+${nt(s.extraPrice)}）`, () => adjust(no, 'people', 1));
+        if (t.addPeople > 0) mb('−1 位', () => adjust(no, 'people', -1));
+        mb('其他加減金額', () => {
+          const v = prompt('輸入要加減的金額（減少請輸入負數，例如 -100）');
+          if (v === null || v.trim() === '') return;
+          const n = Math.round(Number(v));
+          if (!n) { alert('請輸入數字'); return; }
+          adjust(no, 'adjust', n);
+        });
+        body.append(moneyActs);
+      }
+    }
+    li.append(body);
+    ol.append(li);
+  });
+
+  const orphan = d.tickets.filter(t => t.status !== '已取消' && d.slots.indexOf(t.time) < 0);
+  $('#a-orphan').textContent = orphan.length
+    ? '不在目前時段內的號碼（時段被改過）：' + orphan.map(t => `${t.no} 號 ${t.time}（${t.surname || ''} ${t.phone}）`).join('、')
+    : '';
+
+  const cancelled = d.tickets.filter(t => t.status === '已取消');
+  $('#a-cancelled').textContent = cancelled.length
+    ? '已取消：' + cancelled.map(t => `${t.no} 號（${t.surname || ''} ${t.phone}）`).join('、')
+    : '';
+
+  d.url = location.origin + location.pathname + '?k=' + d.linkKey;
+  if (d.url && $('#a-url').textContent !== d.url) {
+    $('#a-url').textContent = d.url;
+    $('#a-url').href = d.url;
+    $('#a-qr').innerHTML = '';
+    if (window.QRCode) new QRCode($('#a-qr'), { text: d.url, width: 150, height: 150 });
+  }
+}
+
+if (PAGE === 'admin') initAdmin(); else initGuest();
+</script>
+</body>
+</html>
