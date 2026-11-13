@@ -302,7 +302,7 @@ function fmtDate(d) {
   const [y, m, dd] = d.split('-').map(Number);
   return `${m}/${dd}（${WEEK[new Date(y, m - 1, dd).getDay()]}）`;
 }
-function itemsText(items) { return items.map(x => `${x.name} × ${x.count}`).join('、'); }
+function itemsText(items) { return items.map(x => `${x.name}（${x.count} 位）`).join('、'); }
 const store = {
   get() { try { return JSON.parse(localStorage.getItem('portrait-ticket') || 'null'); } catch (e) { return null; } },
   set(v) { try { localStorage.setItem('portrait-ticket', JSON.stringify(v)); } catch (e) {} },
