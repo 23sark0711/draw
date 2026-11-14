@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ⬇ 分享連結時（LINE、IG、FB）顯示的標題、說明和圖片 ⬇ -->
+<title>槙木製作所｜現場繪製 線上抽號</title>
+<meta name="description" content="似顏繪現場抽號，填寫姓氏與手機末三碼即可取得號碼牌與到場時間。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="槙木製作所｜現場繪製">
+<meta property="og:title" content="槙木製作所｜現場繪製 線上抽號">
+<meta property="og:description" content="似顏繪現場抽號，填寫姓氏與手機末三碼即可取得號碼牌與到場時間。">
+<meta property="og:image" content="https://23sark0711.github.io/draw/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 <style>
@@ -98,6 +108,8 @@ summary{cursor:pointer;color:var(--muted)}
 .badge{font-size:.8rem;border-radius:999px;padding:1px 10px;border:1px solid var(--line)}
 .badge.done{color:var(--ok);border-color:var(--ok)}
 .badge.miss{color:var(--red);border-color:var(--red)}
+.badge.hold{background:var(--mark);border-color:var(--mark);color:var(--on-mark)}
+.slot.free .actions button{color:var(--ink)}
 .actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .actions button{font:inherit;font-size:.85rem;padding:4px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
 .share{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
@@ -267,7 +279,7 @@ summary{cursor:pointer;color:var(--muted)}
 <script>
 const $ = s => document.querySelector(s);
 /* ⬇⬇⬇ 把下面這行換成你的 Apps Script「網頁應用程式」網址（結尾是 /exec） ⬇⬇⬇ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxZfZEgy7jfL_e6jxbsZ3PQlFmnXLM8EEvihHptlE597OVW9FUnBf16QlUbWWYX9wQWPg/exec';
+const API_URL = 'https://script.google.com/macros/s/請貼上你的部署ID/exec';
 /* ⬆⬆⬆ 只要改這一行 ⬆⬆⬆ */
 
 const params = new URLSearchParams(location.search);
@@ -689,16 +701,27 @@ function renderAdmin(d) {
     const no = d.taken[i];
     if (no === null) {
       li.classList.add('free');
-      body.textContent = '空';
+      body.append(el('span', '', '空'));
+      const acts = el('div', 'actions');
+      const b = el('button', '', '保留這個時段');
+      b.type = 'button';
+      b.onclick = async () => {
+        const label = prompt(`保留 ${time} 這個時段\n可以寫個備註（例如：朋友預約、休息），不寫也可以`, '保留');
+        if (label === null) return;
+        try { renderAdmin(await call('adminReserve', PW, time, label)); } catch (e) { alert(e.message); }
+      };
+      acts.append(b);
+      body.append(acts);
     } else {
       const t = byNo[no];
       if (t.time !== time) {
         body.textContent = `${no} 號接續`;
       } else {
         const line = el('div', 's-line');
-        line.append(el('strong', '', `${no} 號`), el('span', '', `${t.surname || ''}　手機 ${t.phone}`));
-        line.append(el('span', 'badge' + (t.status === '已完成' ? ' done' : t.status === '未到' ? ' miss' : ''), t.status));
-        body.append(line, el('div', '', itemsText(t.items)));
+        line.append(el('strong', '', `${no} 號`), el('span', '', `${t.surname || ''}${t.phone ? '　手機 ' + t.phone : ''}`));
+        line.append(el('span', 'badge' + (t.status === '已完成' ? ' done' : t.status === '未到' ? ' miss' : t.status === '保留' ? ' hold' : ''), t.status));
+        body.append(line);
+        if (t.items.length) body.append(el('div', '', itemsText(t.items)));
 
         const parts = [`預約 ${nt(t.amount)}`];
         if (t.addPeople) parts.push(`現場加 ${t.addPeople} 位 +${nt(t.addPeople * s.extraPrice)}`);
@@ -714,6 +737,7 @@ function renderAdmin(d) {
           acts.append(b);
         };
         if (t.status === '候位中') { add('完成', '已完成'); add('未到', '未到'); add('取消', '已取消'); }
+        else if (t.status === '保留') { add('完成', '已完成'); add('取消保留', '已取消'); }
         else add('改回候位中', '候位中');
         body.append(acts);
 
